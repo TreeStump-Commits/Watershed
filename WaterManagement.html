@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watershed Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f2fe; /* Lighter Blue background */
+        }
+        /* Basic canvas styling */
+        canvas {
+            background-color: #bae6fd; /* Light Sky Blue for canvas */
+            display: block;
+            margin: 0 auto; /* Center canvas */
+            border-radius: 0.5rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #7dd3fc; /* Sky blue border */
+        }
+        /* Style buttons */
+        button {
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+            border-radius: 0.375rem; /* Rounded */
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none; /* Disable hover effect */
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        /* Specific Button Colors */
+        .btn-blue { background-color: #3b82f6; color: white; } /* Blue */
+        .btn-blue:hover:not(:disabled) { background-color: #2563eb; }
+        .btn-green { background-color: #10b981; color: white; } /* Green */
+        .btn-green:hover:not(:disabled) { background-color: #059669; }
+        .btn-yellow { background-color: #f59e0b; color: white; } /* Yellow */
+        .btn-yellow:hover:not(:disabled) { background-color: #d97706; }
+        .btn-gray { background-color: #6b7280; color: white; } /* Gray */
+        .btn-gray:hover:not(:disabled) { background-color: #4b5563; }
+        .btn-purple { background-color: #8b5cf6; color: white; } /* Purple */
+        .btn-purple:hover:not(:disabled) { background-color: #7c3aed; }
+
+
+        /* Style stat displays */
+        .stat-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem;
+            border: 1px solid #cbd5e1; /* Gray border */
+        }
+        .stat-label {
+            font-weight: 600;
+            color: #475569; /* Slate-600 */
+        }
+        .stat-value {
+            font-weight: 700;
+            color: #1e293b; /* Slate-800 */
+            font-size: 1.1rem;
+        }
+        /* Downstream Req Styling */
+        .downstream-req {
+            border-top: 1px dashed #e2e8f0; /* Slate-200 */
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            font-size: 0.8rem;
+            color: #475569; /* Slate-600 */
+        }
+        .downstream-req strong {
+            color: #1e293b; /* Slate-800 */
+        }
+
+         /* Score Panel Styling */
+        #scorePanel {
+            background-color: #f8fafc; /* Slate-50 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem; /* Space above */
+            margin-bottom: 1rem; /* Space below */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0; /* Slate-200 border */
+            text-align: center;
+        }
+        .score-item {
+            display: inline-block;
+            margin: 0 1.5rem; /* Spacing between scores */
+            font-size: 1rem;
+            color: #334155; /* Slate-700 */
+        }
+        .score-value {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #0f172a; /* Slate-900 */
+        }
+
+        /* Message area styling */
+        #messageArea {
+            background-color: #f0f9ff; /* Sky-50 */
+            border-left: 4px solid #0ea5e9; /* Sky-500 */
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem; /* Rounded */
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #075985; /* Sky-800 */
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        /* Selection Screen Styling */
+        #selectionScreen {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+        .rules-list li {
+            margin-bottom: 0.5rem;
+        }
+        .zone-selection-btn {
+            margin: 0.5rem;
+        }
+        /* Winner/Loser message styling */
+        .game-end-message {
+            font-size: 1.25rem; /* Larger text */
+            font-weight: bold;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .winner-message {
+            color: #047857; /* Emerald-700 */
+            background-color: #d1fae5; /* Emerald-100 */
+            border: 2px solid #059669; /* Emerald-600 */
+        }
+        .loser-message {
+             color: #b91c1c; /* Red-700 */
+             background-color: #fee2e2; /* Red-100 */
+             border: 2px solid #dc2626; /* Red-600 */
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="p-4 md:p-8">
+
+    <h1 class="text-3xl font-bold text-center mb-6 text-sky-800">Watershed Manager</h1>
+
+    <div id="selectionScreen">
+        <h2 class="text-2xl font-semibold mb-4 text-center text-sky-700">Game Setup</h2>
+
+        <div class="mb-6 p-4 border border-sky-200 rounded-lg bg-sky-50">
+            <h3 class="text-lg font-semibold mb-2 text-sky-800">Rules & Objective</h3>
+            <ul class="list-disc list-inside text-sm text-slate-700 rules-list">
+                <li>Manage your zone's resources and balance competing needs.</li>
+                <li>Zone location matters (Upstream: clean/costly, Downstream: polluted/cheaper).</li>
+                <li>Development increases income but also pollution and demand.</li>
+                <li>Treatment plants improve quality but cost money (less effective downstream).</li>
+                <li>**Invest in Conservation:** Permanently reduces city water demand per person (by 15% per level!). Cost increases with each level invested.</li>
+                <li>**Population:** Initially stable. **After Turn 10,** grows or shrinks based on Satisfaction (50% is neutral). Quality &le; 10% causes immediate loss (Superfund Award)! (Warning below 15%)</li>
+                <li>**Satisfaction:** Affected by meeting water demand and quality (effects slightly reduced early on). Changes have a **2-turn lag**. **After Turn 10,** Quality < 40% causes rapid decline, and population lower than its peak also hurts satisfaction (penalty reduced).</li>
+                <li>**Downstream Delivery:** **After Turn 10,** Upstream/Midstream zones have an *additional* water demand of <span id="ruleMinQty">?</span> units for downstream. Penalties apply if total demand isn't met OR if your zone's overall quality is below <span id="ruleMinQual">?</span>%. Fines paid are transferred to the downstream neighbor!</li>
+                <li>**Debt:** You can spend money you don't have, going into debt (negative balance). However, if your money is &le; 0 for 3 consecutive turns, you lose (Detroit Award)! (Warning on turn 2 of debt)</li>
+                <li>Costs increase as population grows. Compete against two AI managers.</li>
+                <li>Game lasts <strong><span id="maxTurnsDisplay">20</span> turns</strong>. Highest score wins.</li>
+            </ul>
+            <h3 class="text-lg font-semibold mt-4 mb-2 text-sky-800">Winning Condition</h3>
+            <p class="text-sm text-slate-700">
+                Highest score wins. Score = <strong>Population &times; (Sustainability Score)&sup2;</strong>
+                <br>(Sustainability depends on Water Quality and meeting Water Demand).
+            </p>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-3 text-center text-sky-700">Choose Your Starting Zone:</h3>
+        <div class="text-center">
+            <button id="selectUpstream" class="btn-blue zone-selection-btn">⛰️ Play Upstream (Zone 1)</button>
+            <button id="selectMidstream" class="btn-green zone-selection-btn">🌲 Play Midstream (Zone 2)</button>
+            <button id="selectDownstream" class="btn-purple zone-selection-btn">🌾 Play Downstream (Zone 3)</button>
+        </div>
+    </div>
+
+    <div id="gameScreen" style="display: none;">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div id="zone1Stats" class="stat-card"> <h2 class="text-xl font-semibold mb-3 border-b pb-2"><span id="zone1Sprite">⛰️</span> <span id="zone1Title">Zone 1</span></h2> <p><span class="stat-label">Turn:</span> <span id="turnCounter" class="stat-value">0</span>/<span id="maxTurns">20</span></p> <p><span class="stat-label">Money:</span> $<span id="zone1Money" class="stat-value">0</span></p> <p><span class="stat-label">Population:</span> <span id="zone1Population" class="stat-value">0</span>k (<span id="zone1MaxPop" class="text-xs text-slate-500">Max: 0</span>)</p> <p><span class="stat-label">Development:</span> Lvl <span id="zone1Development" class="stat-value">0</span></p> <p><span class="stat-label">Treatment:</span> Lvl <span id="zone1Treatment" class="stat-value">0</span></p> <p><span class="stat-label">Conservation:</span> Lvl <span id="zone1Conservation" class="stat-value">0</span></p> <p><span class="stat-label">Water Quality:</span> <span id="zone1Quality" class="stat-value">0</span>%</p> <p><span class="stat-label">Satisfaction:</span> <span id="zone1Satisfaction" class="stat-value">0</span>%</p> <p><span class="stat-label">Water Availability:</span> <span id="zone1Availability" class="stat-value text-sm">Avail: 0 / Proj. Demand: 0</span> u</p> <div id="zone1DownstreamReq" class="downstream-req" style="display: none;">Downstream Obligation (Turn 11+): <br>Adds <strong><span id="zone1ReqQty">?</span></strong> units to demand. <br>Zone Quality must be &ge; <strong><span id="zone1ReqQual">?</span></strong>%. Base Fine: $<strong><span id="zone1ReqFine">?</span></strong></div> </div>
+            <div id="zone2Stats" class="stat-card"> <h2 class="text-xl font-semibold mb-3 border-b pb-2"><span id="zone2Sprite">🌲</span> <span id="zone2Title">Zone 2</span></h2> <p><span class="stat-label">Money:</span> $<span id="zone2Money" class="stat-value">0</span></p> <p><span class="stat-label">Population:</span> <span id="zone2Population" class="stat-value">0</span>k (<span id="zone2MaxPop" class="text-xs text-slate-500">Max: 0</span>)</p> <p><span class="stat-label">Development:</span> Lvl <span id="zone2Development" class="stat-value">0</span></p> <p><span class="stat-label">Treatment:</span> Lvl <span id="zone2Treatment" class="stat-value">0</span></p> <p><span class="stat-label">Conservation:</span> Lvl <span id="zone2Conservation" class="stat-value">0</span></p> <p><span class="stat-label">Water Quality:</span> <span id="zone2Quality" class="stat-value">0</span>%</p> <p><span class="stat-label">Satisfaction:</span> <span id="zone2Satisfaction" class="stat-value">0</span>%</p> <p><span class="stat-label">Water Availability:</span> <span id="zone2Availability" class="stat-value text-sm">Avail: 0 / Proj. Demand: 0</span> u</p> <div id="zone2DownstreamReq" class="downstream-req" style="display: none;">Downstream Obligation (Turn 11+): <br>Adds <strong><span id="zone2ReqQty">?</span></strong> units to demand. <br>Zone Quality must be &ge; <strong><span id="zone2ReqQual">?</span></strong>%. Base Fine: $<strong><span id="zone2ReqFine">?</span></strong></div> </div>
+            <div id="zone3Stats" class="stat-card"> <h2 class="text-xl font-semibold mb-3 border-b pb-2"><span id="zone3Sprite">🌾</span> <span id="zone3Title">Zone 3</span></h2> <p><span class="stat-label">Money:</span> $<span id="zone3Money" class="stat-value">0</span></p> <p><span class="stat-label">Population:</span> <span id="zone3Population" class="stat-value">0</span>k (<span id="zone3MaxPop" class="text-xs text-slate-500">Max: 0</span>)</p> <p><span class="stat-label">Development:</span> Lvl <span id="zone3Development" class="stat-value">0</span></p> <p><span class="stat-label">Treatment:</span> Lvl <span id="zone3Treatment" class="stat-value">0</span></p> <p><span class="stat-label">Conservation:</span> Lvl <span id="zone3Conservation" class="stat-value">0</span></p> <p><span class="stat-label">Water Quality:</span> <span id="zone3Quality" class="stat-value">0</span>%</p> <p><span class="stat-label">Satisfaction:</span> <span id="zone3Satisfaction" class="stat-value">0</span>%</p> <p><span class="stat-label">Water Availability:</span> <span id="zone3Availability" class="stat-value text-sm">Avail: 0 / Proj. Demand: 0</span> u</p> </div>
+        </div>
+
+        <div id="scorePanel"> <h3 class="text-lg font-semibold mb-2 text-slate-700">Live Scores</h3> <div class="score-item"><span id="zone1ScoreSprite">⛰️</span> Zone 1: <span id="zone1ScoreDisplay" class="score-value">0</span></div> <div class="score-item"><span id="zone2ScoreSprite">🌲</span> Zone 2: <span id="zone2ScoreDisplay" class="score-value">0</span></div> <div class="score-item"><span id="zone3ScoreSprite">🌾</span> Zone 3: <span id="zone3ScoreDisplay" class="score-value">0</span></div> </div>
+
+        <div id="actionPanel" class="text-center mb-6 p-4 bg-white rounded-lg shadow border border-slate-200"> <h3 class="text-lg font-semibold mb-3 text-slate-700">Your Actions (Turn <span id="actionTurnCounter">0</span>)</h3> <button id="developBtn" class="btn-yellow mr-2">Develop Land (Cost: $<span id="developCostText">?</span>)</button> <button id="treatBtn" class="btn-blue mr-2">Upgrade Treatment (Cost: $<span id="treatCostText">?</span>)</button> <button id="investConservationBtn" class="btn-green mr-2">Invest Conservation (Cost: $<span id="investConservationCostText">?</span>)</button> <button id="noActionBtn" class="btn-gray">Do Nothing (Cost: $0)</button> </div>
+
+        <canvas id="gameCanvas" width="800" height="200"></canvas>
+        <div id="messageArea" class="mt-4"></div>
+        <div id="winnerAnnounceArea" class="mt-4"></div> <button id="restartBtn" class="btn-blue mt-4 mx-auto block" style="display: none;">Play Again?</button>
+    </div>
+
+    <script>
+        // --- Game Configuration ---
+        const MAX_TURNS = 20;
+        const STARTING_MONEY = 100;
+        const BASE_STARTING_POPULATION = 10;
+        const BASE_STARTING_QUALITY = 80;
+        const BASE_STARTING_SATISFACTION = 70;
+        const STARTING_AVAILABILITY = 100;
+
+        // Base Costs
+        const BASE_DEVELOPMENT_COST = 50;
+        const BASE_TREATMENT_COST = 75;
+        const BASE_CONSERVATION_INVESTMENT_COST = 40;
+
+        // Gameplay Factors
+        const BASE_INCOME_PER_DEV = 15;
+        const BASE_WATER_DEMAND_PER_POP = 2;
+        const BASE_POLLUTION_PER_DEV = 3;
+        const TREATMENT_COST_SCALING_PER_LEVEL = 1.5;
+        const BASE_TREATMENT_POLLUTION_REDUCTION = 10;
+        const BASE_TREATMENT_QUALITY_BONUS = 5;
+        const CONSERVATION_EFFECT_PER_LEVEL = 0.85; // Buffed: 15% demand reduction per level (was 0.90)
+        const CONSERVATION_COST_LEVEL_SCALING = 1.4;
+        const POPULATION_COST_SCALING_FACTOR = 0.02;
+        const BASE_QUALITY_IMPACT_FACTOR = 1.5;
+        const BASE_SATISFACTION_IMPACT = 5;
+        const EARLY_GAME_SAT_IMPACT_REDUCTION = 0.5;
+
+        // Advanced Dynamics Factors
+        const ADVANCED_MECHANICS_START_TURN = 11;
+        const SATISFACTION_LAG_TURNS = 2;
+        const LOW_QUALITY_THRESHOLD_SAT = 40;
+        const LOW_QUALITY_SAT_MULTIPLIER = 0.95;
+        const CRITICAL_QUALITY_THRESHOLD_POP = 20;
+        const SUPERFUND_QUALITY_THRESHOLD = 10;
+        const SUPERFUND_WARNING_THRESHOLD = 15;
+        const CRITICAL_QUALITY_POP_PENALTY_RATE = 0.05;
+        const POP_DEFICIT_SAT_PENALTY_FACTOR = 0.1;
+        const SATISFACTION_POP_GROWTH_NEUTRAL = 50;
+        const SATISFACTION_POP_GROWTH_SENSITIVITY = 0.10;
+        const MIN_POPULATION = 1;
+        const DEBT_TURNS_LIMIT = 3;
+        const DEBT_WARNING_TURN = DEBT_TURNS_LIMIT - 1;
+
+        // Downstream Delivery Requirement
+        const MIN_DOWNSTREAM_FLOW_QTY = 15;
+        const MIN_DOWNSTREAM_FLOW_QUALITY = 55;
+        const DOWNSTREAM_DELIVERY_FINE = 60;
+
+        // Zone Modifiers
+        const zoneModifiers = {
+            zone1: { name: "Upstream", sprite: '⛰️', startPopMod: 0.8, startQualityMod: 1.1, devCostMod: 1.3, treatCostMod: 1.3, conserveCostMod: 1.1, treatmentEffectivenessMod: 1.0, pollutionImpactMod: 1.0, color: '#3b82f6' },
+            zone2: { name: "Midstream", sprite: '🌲', startPopMod: 1.0, startQualityMod: 1.0, devCostMod: 1.0, treatCostMod: 1.0, conserveCostMod: 1.0, treatmentEffectivenessMod: 1.0, pollutionImpactMod: 1.0, color: '#10b981' },
+            zone3: { name: "Downstream", sprite: '🌾', startPopMod: 1.2, startQualityMod: 0.8, devCostMod: 0.8, treatCostMod: 0.8, conserveCostMod: 0.9, treatmentEffectivenessMod: 0.85, pollutionImpactMod: 1.1, color: '#8b5cf6' }
+        };
+
+        // --- Game State ---
+        let currentTurn = 0; let zones = {}; let playerZoneId = null;
+        let botZoneIds = []; let isPlayerTurn = false; let gameOver = false;
+
+        // --- DOM Elements ---
+        const selectionScreen = document.getElementById('selectionScreen'); const gameScreen = document.getElementById('gameScreen'); const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); const turnCounterEl = document.getElementById('turnCounter'); const maxTurnsEl = document.getElementById('maxTurns'); const maxTurnsDisplayEl = document.getElementById('maxTurnsDisplay'); const actionTurnCounterEl = document.getElementById('actionTurnCounter'); const messageAreaEl = document.getElementById('messageArea'); const winnerAnnounceAreaEl = document.getElementById('winnerAnnounceArea'); const zone1ScoreDisplayEl = document.getElementById('zone1ScoreDisplay'); const zone2ScoreDisplayEl = document.getElementById('zone2ScoreDisplay'); const zone3ScoreDisplayEl = document.getElementById('zone3ScoreDisplay'); const zone1ScoreSpriteEl = document.getElementById('zone1ScoreSprite'); const zone2ScoreSpriteEl = document.getElementById('zone2ScoreSprite'); const zone3ScoreSpriteEl = document.getElementById('zone3ScoreSprite'); const developBtn = document.getElementById('developBtn'); const treatBtn = document.getElementById('treatBtn'); const investConservationBtn = document.getElementById('investConservationBtn'); const noActionBtn = document.getElementById('noActionBtn'); const developCostTextEl = document.getElementById('developCostText'); const treatCostTextEl = document.getElementById('treatCostText'); const investConservationCostTextEl = document.getElementById('investConservationCostText'); const restartBtn = document.getElementById('restartBtn'); const ruleMinQtyEl = document.getElementById('ruleMinQty'); const ruleMinQualEl = document.getElementById('ruleMinQual'); const zone1DownstreamReqEl = document.getElementById('zone1DownstreamReq'); const zone2DownstreamReqEl = document.getElementById('zone2DownstreamReq');
+
+        // --- Initialization ---
+        function setupGame() { selectionScreen.style.display = 'block'; gameScreen.style.display = 'none'; restartBtn.style.display = 'none'; winnerAnnounceAreaEl.innerHTML = ''; gameOver = false; messageAreaEl.innerHTML = ''; maxTurnsDisplayEl.textContent = MAX_TURNS; ruleMinQtyEl.textContent = MIN_DOWNSTREAM_FLOW_QTY; ruleMinQualEl.textContent = MIN_DOWNSTREAM_FLOW_QUALITY; document.getElementById('selectUpstream').innerHTML = `${zoneModifiers.zone1.sprite} Play Upstream`; document.getElementById('selectMidstream').innerHTML = `${zoneModifiers.zone2.sprite} Play Midstream`; document.getElementById('selectDownstream').innerHTML = `${zoneModifiers.zone3.sprite} Play Downstream`; document.getElementById('selectUpstream').onclick = () => startGame('zone1'); document.getElementById('selectMidstream').onclick = () => startGame('zone2'); document.getElementById('selectDownstream').onclick = () => startGame('zone3'); developBtn.onclick = () => handlePlayerAction('develop'); treatBtn.onclick = () => handlePlayerAction('treat'); investConservationBtn.onclick = () => handlePlayerAction('investConservation'); noActionBtn.onclick = () => handlePlayerAction('noAction'); restartBtn.onclick = setupGame; }
+        function startGame(chosenZoneId) { selectionScreen.style.display = 'none'; gameScreen.style.display = 'block'; playerZoneId = chosenZoneId; currentTurn = 0; isPlayerTurn = false; gameOver = false; zones = {}; const allZoneIds = ['zone1', 'zone2', 'zone3']; botZoneIds = allZoneIds.filter(id => id !== playerZoneId); allZoneIds.forEach(zoneId => { const mods = zoneModifiers[zoneId]; const startPop = Math.round(BASE_STARTING_POPULATION * mods.startPopMod); const startQuality = Math.max(10, Math.min(100, Math.round(BASE_STARTING_QUALITY * mods.startQualityMod))); zones[zoneId] = createZoneState( zoneId, STARTING_MONEY, startPop, 1, 0, startQuality, BASE_STARTING_SATISFACTION, STARTING_AVAILABILITY ); zones[zoneId].isPlayer = (zoneId === playerZoneId); zones[zoneId].maxPopulation = startPop; }); maxTurnsEl.textContent = MAX_TURNS; messageAreaEl.innerHTML = ''; winnerAnnounceAreaEl.innerHTML = ''; logMessage(`Game started. Player controls ${getZoneName(playerZoneId)} Zone.`); zone1ScoreSpriteEl.textContent = zoneModifiers.zone1.sprite; zone2ScoreSpriteEl.textContent = zoneModifiers.zone2.sprite; zone3ScoreSpriteEl.textContent = zoneModifiers.zone3.sprite; setupDownstreamReqUI(); updateUI(); drawGame(); nextTurn(); }
+        function createZoneState(id, money, pop, dev, treat, quality, satisfaction, availability) { return { id: id, money: money, population: pop, development: dev, treatment: treat, quality: quality, satisfaction: satisfaction, baseAvailability: availability, currentAvailability: 0, waterDemand: 0, pollutionGenerated: 0, waterWithdrawn: 0, actionTakenThisTurn: null, isPlayer: false, modifiers: zoneModifiers[id], maxPopulation: pop, satisfactionDeltaHistory: Array(SATISFACTION_LAG_TURNS).fill(0), turnsInDebt: 0, projectedDemand: 0, conservationLevel: 0 }; }
+        function setupDownstreamReqUI() { zone1DownstreamReqEl.style.display = 'none'; zone2DownstreamReqEl.style.display = 'none'; if (playerZoneId === 'zone1') { zone1DownstreamReqEl.style.display = 'block'; document.getElementById('zone1ReqQty').textContent = MIN_DOWNSTREAM_FLOW_QTY; document.getElementById('zone1ReqQual').textContent = MIN_DOWNSTREAM_FLOW_QUALITY; document.getElementById('zone1ReqFine').textContent = DOWNSTREAM_DELIVERY_FINE; } else if (playerZoneId === 'zone2') { zone2DownstreamReqEl.style.display = 'block'; document.getElementById('zone2ReqQty').textContent = MIN_DOWNSTREAM_FLOW_QTY; document.getElementById('zone2ReqQual').textContent = MIN_DOWNSTREAM_FLOW_QUALITY; document.getElementById('zone2ReqFine').textContent = DOWNSTREAM_DELIVERY_FINE; } }
+
+        // --- Game Loop ---
+        function nextTurn() { if (gameOver) return; currentTurn++; logMessage(`--- Turn ${currentTurn} ---`, 'title'); isPlayerTurn = true; const playerZone = zones[playerZoneId]; calculateTurnStart(playerZone, getUpstreamAvailability(playerZoneId)); playerZone.projectedDemand = calculateTotalDemand(playerZone); updateUI(); enablePlayerActions(); logMessage("Your turn. Choose an action."); }
+        function handlePlayerAction(actionType) { if (!isPlayerTurn || gameOver) return; const playerZone = zones[playerZoneId]; disablePlayerActions(); let cost = 0; let actionMsg = `You chose to `; switch (actionType) { case 'develop': cost = calculateActionCost('develop', playerZone); actionMsg += `develop land (Cost: $${cost}).`; break; case 'treat': cost = calculateActionCost('treat', playerZone); actionMsg += `build/upgrade treatment (Cost: $${cost}).`; break; case 'investConservation': cost = calculateActionCost('investConservation', playerZone); actionMsg += `invest in conservation (Cost: $${cost}).`; break; case 'noAction': actionMsg += `do nothing.`; break; default: actionMsg = "Unknown action selected."; cost = 0; break; } if (actionType !== 'noAction') { playerZone.money -= cost; if (actionType === 'investConservation') { playerZone.conservationLevel++; playerZone.projectedDemand = calculateTotalDemand(playerZone); document.getElementById(`${playerZoneId}Availability`).textContent = `Avail: ${playerZone.currentAvailability} / Proj. Demand: ${playerZone.projectedDemand}`; logMessage("Conservation level increased! Projected demand permanently lowered.", "info"); } } else { logMessage(actionMsg, 'info'); } playerZone.actionTakenThisTurn = actionType; isPlayerTurn = false; runBotTurns(); }
+        function runBotTurns() { ['zone1', 'zone2', 'zone3'].forEach(zoneId => { if (zones[zoneId].isPlayer) return; logMessage(`${getZoneName(zoneId)} ${zones[zoneId].modifiers.sprite} (Bot) is making decisions...`); calculateTurnStart(zones[zoneId], getUpstreamAvailability(zoneId)); runBotLogic(zones[zoneId]); }); updateGameState(); }
+        function runBotLogic(botZone) { let bestAction = 'noAction'; let bestScore = botZone.money * 0.05; let devCost = calculateActionCost('develop', botZone); if (!isNaN(devCost) && isFinite(devCost)) { let score = (botZone.quality * 0.1 + botZone.satisfaction * 0.1 - devCost * 0.1); if (score > bestScore) { bestScore = score; bestAction = 'develop'; } } let treatCost = calculateActionCost('treat', botZone); if (!isNaN(treatCost) && isFinite(treatCost)) { let score = (100 - botZone.quality) * 0.5 + botZone.development * 0.2 - treatCost * 0.1; if (score > bestScore) { bestScore = score; bestAction = 'treat'; } } let conserveCost = calculateActionCost('investConservation', botZone); if (!isNaN(conserveCost) && isFinite(conserveCost)) { let potentialDemand = calculateTotalDemand(botZone); let availabilityDeficit = Math.max(0, potentialDemand - botZone.currentAvailability); let score = availabilityDeficit * 0.4 - conserveCost * 0.1 + (botZone.conservationLevel < 5 ? 5 : 0); if (score > bestScore) { bestScore = score; bestAction = 'investConservation'; } } let actionMsg = `${getZoneName(botZone.id)} ${botZone.modifiers.sprite} (Bot) chose to `; let cost = 0; switch (bestAction) { case 'develop': cost = calculateActionCost('develop', botZone); botZone.money -= cost; actionMsg += `develop land ($${cost}).`; break; case 'treat': cost = calculateActionCost('treat', botZone); botZone.money -= cost; actionMsg += `upgrade treatment ($${cost}).`; break; case 'investConservation': cost = calculateActionCost('investConservation', botZone); botZone.money -= cost; botZone.conservationLevel++; actionMsg += `invest in conservation ($${cost}).`; break; default: actionMsg += "do nothing."; break; } botZone.actionTakenThisTurn = bestAction; logMessage(actionMsg); }
+
+        // --- Update Phase (Refactored) ---
+        function updateGameState() { if (gameOver) return; ['zone1', 'zone2', 'zone3'].forEach(zoneId => { if (gameOver) return; const zone = zones[zoneId]; const upstreamAvailability = getUpstreamAvailability(zoneId); applyActionEffects(zone); calculateWaterUsage(zone, upstreamAvailability); calculateQualityUpdate(zone); if (zone.isPlayer && zone.quality <= SUPERFUND_WARNING_THRESHOLD && zone.quality > SUPERFUND_QUALITY_THRESHOLD && !gameOver) { logMessage(`Warning: Water quality critically low (${zone.quality}%)! Feds Incoming! 🚓👮`, 'error'); } if (zone.isPlayer && zone.quality <= SUPERFUND_QUALITY_THRESHOLD) { triggerLossCondition(zone, 'superfund'); return; } calculateSatisfactionUpdate(zone); calculatePopulationUpdate(zone); if (currentTurn >= ADVANCED_MECHANICS_START_TURN) { applyDownstreamPenalties(zone); } if (zone.money <= 0) { zone.turnsInDebt++; if (zone.isPlayer && zone.turnsInDebt === DEBT_WARNING_TURN && !gameOver) { logMessage(`Warning: Final turn to resolve debt! State Incoming! 🚓👮`, 'error'); } } else { zone.turnsInDebt = 0; } if (zone.isPlayer && zone.turnsInDebt >= DEBT_TURNS_LIMIT) { triggerLossCondition(zone, 'detroit'); return; } zone.actionTakenThisTurn = null; }); if (!gameOver) { updateUI(); drawGame(); if (currentTurn >= MAX_TURNS) { endGame(); } else { nextTurn(); } } }
+        function applyActionEffects(zone) { if (zone.actionTakenThisTurn === 'develop') { zone.development++; } else if (zone.actionTakenThisTurn === 'treat') { zone.treatment++; } else if (zone.actionTakenThisTurn === 'investConservation') { /* Level already incremented */ } }
+        function calculateWaterUsage(zone, availableUpstreamWater) { zone.currentAvailability = Math.round(Math.min(zone.baseAvailability, availableUpstreamWater)); zone.waterDemand = calculateTotalDemand(zone); zone.waterWithdrawn = Math.min(zone.waterDemand, zone.currentAvailability); }
+        function calculateTotalDemand(zone) { let demandMultiplier = Math.pow(CONSERVATION_EFFECT_PER_LEVEL, zone.conservationLevel); let cityDemand = zone.population * BASE_WATER_DEMAND_PER_POP * demandMultiplier; cityDemand = Math.round(cityDemand); let downstreamDemandQty = 0; if ((zone.id === 'zone1' || zone.id === 'zone2') && currentTurn >= ADVANCED_MECHANICS_START_TURN) { downstreamDemandQty = MIN_DOWNSTREAM_FLOW_QTY; } return cityDemand + downstreamDemandQty; }
+        function calculateQualityUpdate(zone) { zone.pollutionGenerated = zone.development * BASE_POLLUTION_PER_DEV; let effectiveTreatmentReduction = BASE_TREATMENT_POLLUTION_REDUCTION * zone.modifiers.treatmentEffectivenessMod; let pollutionReduction = zone.treatment * effectiveTreatmentReduction; let netPollution = Math.max(0, zone.pollutionGenerated - pollutionReduction); let upstreamQuality = getUpstreamQuality(zone.id); let effectiveQualityImpact = BASE_QUALITY_IMPACT_FACTOR * zone.modifiers.pollutionImpactMod; let qualityChangeDueToPollution = netPollution * effectiveQualityImpact; let qualityBonusFromTreatment = zone.treatment * BASE_TREATMENT_QUALITY_BONUS * zone.modifiers.treatmentEffectivenessMod * 0.2; zone.quality = Math.max(0, Math.min(100, Math.round(upstreamQuality - qualityChangeDueToPollution + qualityBonusFromTreatment))); }
+        function calculateSatisfactionUpdate(zone) { let currentSatisfactionDelta = 0; let qualityImpactFactor = (currentTurn < ADVANCED_MECHANICS_START_TURN) ? EARLY_GAME_SAT_IMPACT_REDUCTION : 1.0; if (zone.waterWithdrawn < zone.waterDemand) { currentSatisfactionDelta -= BASE_SATISFACTION_IMPACT * 2; if (zone.isPlayer && currentTurn > 0) logMessage(`Warning: Total demand unmet! Satisfaction will drop (lagged).`, 'warning'); } else { currentSatisfactionDelta += BASE_SATISFACTION_IMPACT * 0.5; } if (zone.quality < 50) currentSatisfactionDelta -= BASE_SATISFACTION_IMPACT * qualityImpactFactor; else if (zone.quality < 70) currentSatisfactionDelta -= BASE_SATISFACTION_IMPACT * 0.5 * qualityImpactFactor; else if (zone.quality > 85) currentSatisfactionDelta += BASE_SATISFACTION_IMPACT * 0.5 * qualityImpactFactor; if (currentTurn >= ADVANCED_MECHANICS_START_TURN) { let popDeficit = Math.max(0, zone.maxPopulation - zone.population); let deficitSatisfactionPenalty = Math.round(popDeficit * POP_DEFICIT_SAT_PENALTY_FACTOR); currentSatisfactionDelta -= deficitSatisfactionPenalty; if (deficitSatisfactionPenalty > 0 && zone.isPlayer) { logMessage(`Info: Population deficit (${popDeficit}k) affecting satisfaction delta (lagged).`, 'info'); } } zone.satisfactionDeltaHistory.push(Math.round(currentSatisfactionDelta)); if (zone.satisfactionDeltaHistory.length > SATISFACTION_LAG_TURNS) { zone.satisfactionDeltaHistory.shift(); } let appliedDelta = (zone.satisfactionDeltaHistory.length >= SATISFACTION_LAG_TURNS) ? zone.satisfactionDeltaHistory[0] : 0; zone.satisfaction += appliedDelta; if (currentTurn >= ADVANCED_MECHANICS_START_TURN && zone.quality < LOW_QUALITY_THRESHOLD_SAT) { let oldSatisfaction = zone.satisfaction; zone.satisfaction *= LOW_QUALITY_SAT_MULTIPLIER; zone.satisfaction = Math.round(zone.satisfaction); if (zone.isPlayer && zone.satisfaction < oldSatisfaction) { logMessage(`Warning: Low water quality (<${LOW_QUALITY_THRESHOLD_SAT}%) causing immediate satisfaction drop!`, 'warning'); } } zone.satisfaction = Math.max(0, Math.min(100, zone.satisfaction)); }
+         function calculatePopulationUpdate(zone) { let popPenalty = 0; if (currentTurn >= ADVANCED_MECHANICS_START_TURN && zone.quality < CRITICAL_QUALITY_THRESHOLD_POP) { popPenalty = Math.round(zone.population * CRITICAL_QUALITY_POP_PENALTY_RATE); zone.population -= popPenalty; if (zone.isPlayer && popPenalty > 0) logMessage(`Critical: Water quality below ${CRITICAL_QUALITY_THRESHOLD_POP}%! People are leaving! (-${popPenalty}k pop)`, 'error'); } let growthFactor = 1.0; if (currentTurn >= ADVANCED_MECHANICS_START_TURN) { growthFactor = 1.0 + ((zone.satisfaction - SATISFACTION_POP_GROWTH_NEUTRAL) / 50.0) * SATISFACTION_POP_GROWTH_SENSITIVITY; growthFactor = Math.max(1.0 - SATISFACTION_POP_GROWTH_SENSITIVITY, Math.min(1.0 + SATISFACTION_POP_GROWTH_SENSITIVITY, growthFactor)); } let oldPopulation = zone.population; if (growthFactor !== 1.0) { zone.population = Math.round(zone.population * growthFactor); } zone.population = Math.max(MIN_POPULATION, zone.population); let popChange = zone.population - oldPopulation; if (zone.isPlayer && Math.abs(popChange) > 0 && currentTurn >= ADVANCED_MECHANICS_START_TURN) { let changeDesc = popChange > 0 ? `grew by ${popChange}k` : `shrank by ${-popChange}k`; let reason = `(Satisfaction: ${zone.satisfaction}%)`; logMessage(`Population ${changeDesc} ${reason}`, 'info'); } zone.maxPopulation = Math.max(zone.maxPopulation, zone.population); }
+        function applyDownstreamPenalties(zone) { if ((zone.id === 'zone1' || zone.id === 'zone2') && currentTurn >= ADVANCED_MECHANICS_START_TURN) { let downstreamDemandQty = MIN_DOWNSTREAM_FLOW_QTY; let qtyFine = 0; let qualityFine = 0; let totalFine = 0; let demandShortfall = Math.max(0, zone.waterDemand - zone.waterWithdrawn); if (demandShortfall > 0) { let shortfallRatio = zone.waterDemand > 0 ? demandShortfall / zone.waterDemand : 0; qtyFine = Math.round(DOWNSTREAM_DELIVERY_FINE * shortfallRatio); } if (zone.quality < MIN_DOWNSTREAM_FLOW_QUALITY) { let qualityDeficitRatio = (MIN_DOWNSTREAM_FLOW_QUALITY - zone.quality) / MIN_DOWNSTREAM_FLOW_QUALITY; qualityFine = Math.round(DOWNSTREAM_DELIVERY_FINE * qualityDeficitRatio); } totalFine = qtyFine + qualityFine; if (totalFine > 0) { let downstreamNeighborId = (zone.id === 'zone1') ? 'zone2' : ((zone.id === 'zone2') ? 'zone3' : null); let reason = ""; if (qtyFine > 0 && qualityFine > 0) reason = `quantity & quality`; else if (qtyFine > 0) reason = `quantity`; else if (qualityFine > 0) reason = `quality (${zone.quality}/${MIN_DOWNSTREAM_FLOW_QUALITY}%)`; zone.money -= totalFine; let logType = zone.isPlayer ? 'error' : 'info'; let message = `${getZoneName(zone.id)} ${zone.modifiers.sprite} failed downstream delivery (${reason})! Paid $${totalFine}`; if (downstreamNeighborId && zones[downstreamNeighborId]) { zones[downstreamNeighborId].money += totalFine; message += ` to ${getZoneName(downstreamNeighborId)}.`; if (zones[downstreamNeighborId].isPlayer) { logMessage(`Received $${totalFine} in fines from upstream neighbor (${getZoneName(zone.id)}).`, 'info'); } } else { message += '.'; } logMessage(message, logType); } } }
+        function calculateTurnStart(zone, availableUpstreamWater) { zone.money += zone.development * BASE_INCOME_PER_DEV; zone.currentAvailability = Math.round(Math.min(zone.baseAvailability, availableUpstreamWater)); zone.waterDemand = 0; zone.pollutionGenerated = 0; zone.waterWithdrawn = 0; zone.projectedDemand = 0; }
+
+        // --- Cost Calculation ---
+        function calculatePopulationCostFactor(population) { let popFactor = 1 + Math.max(0, population - BASE_STARTING_POPULATION) * (POPULATION_COST_SCALING_FACTOR / 1); return Math.max(1, popFactor); }
+        function calculateActionCost(actionType, zone) { let baseCost = 0, zoneCostMod = 1.0, levelScaling = 1.0; switch (actionType) { case 'develop': baseCost = BASE_DEVELOPMENT_COST; zoneCostMod = zone.modifiers.devCostMod; break; case 'treat': baseCost = BASE_TREATMENT_COST; zoneCostMod = zone.modifiers.treatCostMod; levelScaling = Math.pow(TREATMENT_COST_SCALING_PER_LEVEL, zone.treatment); break; case 'investConservation': baseCost = BASE_CONSERVATION_INVESTMENT_COST; zoneCostMod = zone.modifiers.conserveCostMod; levelScaling = Math.pow(CONSERVATION_COST_LEVEL_SCALING, zone.conservationLevel); break; default: return 0; } let populationFactor = calculatePopulationCostFactor(zone.population); if (isNaN(baseCost) || isNaN(zoneCostMod) || isNaN(levelScaling) || isNaN(populationFactor)) { console.error("Invalid component in cost calculation:", {baseCost, zoneCostMod, levelScaling, populationFactor}); return Infinity; } return Math.round(baseCost * zoneCostMod * levelScaling * populationFactor); }
+
+        // --- UI Update ---
+        function updateUI() { turnCounterEl.textContent = currentTurn; actionTurnCounterEl.textContent = currentTurn; ['zone1', 'zone2', 'zone3'].forEach(zoneId => { const zone = zones[zoneId]; if (!zone) return; const isPlayer = zone.isPlayer; const titleEl = document.getElementById(`${zoneId}Title`); const spriteEl = document.getElementById(`${zoneId}Sprite`); titleEl.textContent = getZoneName(zoneId); titleEl.className = `text-xl font-semibold mb-3 border-b pb-2 ${isPlayer ? 'text-blue-700' : 'text-slate-600'}`; spriteEl.textContent = zone.modifiers.sprite; document.getElementById(`${zoneId}Money`).textContent = zone.money; document.getElementById(`${zoneId}Population`).textContent = zone.population; document.getElementById(`${zoneId}MaxPop`).textContent = `Max: ${zone.maxPopulation}`; document.getElementById(`${zoneId}Development`).textContent = zone.development; document.getElementById(`${zoneId}Treatment`).textContent = zone.treatment; document.getElementById(`${zoneId}Conservation`).textContent = zone.conservationLevel; document.getElementById(`${zoneId}Quality`).textContent = zone.quality; document.getElementById(`${zoneId}Satisfaction`).textContent = zone.satisfaction; document.getElementById(`${zoneId}Availability`).textContent = `Avail: ${zone.currentAvailability} / Proj. Demand: ${zone.projectedDemand}`; const score = calculateScore(zone); document.getElementById(`${zoneId}ScoreDisplay`).textContent = score; document.getElementById(`${zoneId}ScoreSprite`).textContent = zone.modifiers.sprite; }); if (playerZoneId && zones[playerZoneId]) { const playerZone = zones[playerZoneId]; developCostTextEl.textContent = calculateActionCost('develop', playerZone); treatCostTextEl.textContent = calculateActionCost('treat', playerZone); investConservationCostTextEl.textContent = calculateActionCost('investConservation', playerZone); } if (isPlayerTurn && !gameOver) { enablePlayerActions(); } else { disablePlayerActions(); } }
+        function logMessage(msg, type = 'info') { const p = document.createElement('p'); if (type !== 'title') { p.textContent = `[T${currentTurn}] ${msg}`; } else { p.textContent = msg; p.className = 'font-semibold text-sky-700 mt-2'; } if (type === 'warning') p.classList.add('text-yellow-700', 'font-medium'); else if (type === 'error') p.classList.add('text-red-700', 'font-bold'); else if (type === 'info') p.classList.add('text-slate-600'); messageAreaEl.insertBefore(p, messageAreaEl.firstChild); if (messageAreaEl.childElementCount > 40) messageAreaEl.removeChild(messageAreaEl.lastChild); }
+        function disablePlayerActions() { developBtn.disabled = true; treatBtn.disabled = true; investConservationBtn.disabled = true; noActionBtn.disabled = true; }
+        function enablePlayerActions() { if (!playerZoneId || gameOver || !zones[playerZoneId]) return; const devCost = calculateActionCost('develop', zones[playerZoneId]); const treatCost = calculateActionCost('treat', zones[playerZoneId]); const investConservationCost = calculateActionCost('investConservation', zones[playerZoneId]); let isDevCostValid = !isNaN(devCost) && isFinite(devCost); let isTreatCostValid = !isNaN(treatCost) && isFinite(treatCost); let isInvestConservationCostValid = !isNaN(investConservationCost) && isFinite(investConservationCost); developBtn.disabled = !isDevCostValid; treatBtn.disabled = !isTreatCostValid; investConservationBtn.disabled = !isInvestConservationCostValid; noActionBtn.disabled = false; }
+
+        // --- Canvas Drawing ---
+        function drawGame() { ctx.clearRect(0, 0, canvas.width, canvas.height); if (Object.keys(zones).length === 0) return; const zoneWidth = canvas.width / 3 - 20; const zoneHeight = canvas.height - 40; const spacing = (canvas.width - zoneWidth * 3) / 4; drawZone(zones['zone1'], spacing, 20, zoneWidth, zoneHeight); drawZone(zones['zone2'], spacing * 2 + zoneWidth, 20, zoneWidth, zoneHeight); drawZone(zones['zone3'], spacing * 3 + zoneWidth * 2, 20, zoneWidth, zoneHeight); ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 5; ctx.beginPath(); const riverY = canvas.height / 2 + 10; ctx.moveTo(spacing + zoneWidth, riverY); ctx.lineTo(spacing * 2 + zoneWidth, riverY); ctx.moveTo(spacing * 2 + zoneWidth * 2, riverY); ctx.lineTo(spacing * 3 + zoneWidth * 2, riverY); ctx.stroke(); }
+        function drawZone(zone, x, y, w, h) { const color = zone.modifiers.color; ctx.lineWidth = zone.isPlayer ? 4 : 2; ctx.strokeStyle = zone.isPlayer ? '#0284c7' : color; ctx.strokeRect(x, y, w, h); ctx.lineWidth = 1; ctx.fillStyle = zone.isPlayer ? '#0369a1' : color; ctx.font = 'bold 14px Inter'; ctx.textAlign = 'center'; ctx.fillText(`${zone.modifiers.sprite} ${getZoneName(zone.id)} ${zone.isPlayer ? '(You)' : '(Bot)'}`, x + w / 2, y + 20); const barWidth = w - 40; const barX = x + 20; let currentY = y + 45; const barSpacing = 35; let qualityColor = zone.quality > 65 ? '#22c55e' : (zone.quality > 40 ? '#facc15' : '#ef4444'); drawBar(ctx, barX, currentY, barWidth, 12, zone.quality / 100, 'Quality', qualityColor, '#e5e7eb'); currentY += barSpacing; drawBar(ctx, barX, currentY, barWidth, 12, zone.satisfaction / 100, 'Satisfaction', '#facc15', '#e5e7eb'); currentY += barSpacing; let demandMetRatio = zone.waterDemand > 0 ? zone.waterWithdrawn / zone.waterDemand : (zone.waterDemand === 0 ? 1 : 0); drawBar(ctx, barX, currentY, barWidth, 12, demandMetRatio, 'Demand Met', '#60a5fa', '#dbeafe'); currentY += barSpacing; ctx.fillStyle = '#475569'; ctx.font = '12px Inter'; ctx.textAlign = 'left'; ctx.fillText(`Dev:${zone.development}|Treat:${zone.treatment}|Cons:${zone.conservationLevel}`, barX, currentY + 10); }
+         function drawBar(ctx, x, y, w, h, ratio, label, fillColor, bgColor, reversed = false) { ctx.fillStyle = bgColor; ctx.fillRect(x, y, w, h); ctx.fillStyle = fillColor; let filledWidth = w * Math.max(0, Math.min(1, ratio)); if (reversed) ctx.fillRect(x + w - filledWidth, y, filledWidth, h); else ctx.fillRect(x, y, filledWidth, h); ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h); ctx.fillStyle = '#4b5563'; ctx.font = '10px Inter'; ctx.textAlign = 'center'; ctx.fillText(`${label}: ${Math.round(ratio * 100)}%`, x + w / 2, y + h + 14); }
+
+        // --- Helper Functions ---
+        function getZoneName(zoneId) { return zoneModifiers[zoneId]?.name || 'Unknown Zone'; }
+        function getUpstreamZoneId(zoneId) { if (zoneId === 'zone2') return 'zone1'; if (zoneId === 'zone3') return 'zone2'; return null; }
+        function getUpstreamAvailability(zoneId) { const upstreamId = getUpstreamZoneId(zoneId); if (upstreamId && zones[upstreamId]) { return Math.max(0, zones[upstreamId].currentAvailability - zones[upstreamId].waterWithdrawn); } return STARTING_AVAILABILITY; }
+         function getUpstreamQuality(zoneId) { const upstreamId = getUpstreamZoneId(zoneId); if (upstreamId && zones[upstreamId]) { return zones[upstreamId].quality; } return 100; }
+        function calculateScore(zone) { let availabilityFactor = zone.waterDemand > 0 ? Math.max(0, zone.waterWithdrawn / zone.waterDemand) : 1; let sustainability = (zone.quality / 100 * 0.7 + availabilityFactor * 0.3); sustainability = Math.max(0, Math.min(1, sustainability)); let effectivePopulation = Math.max(1, zone.population); return Math.round(effectivePopulation * (sustainability * sustainability)); }
+
+        // --- Game End & Loss Conditions ---
+        function triggerLossCondition(zone, reason) { if (gameOver) return; gameOver = true; isPlayerTurn = false; disablePlayerActions(); logMessage(`--- Game Over ---`, 'title'); winnerAnnounceAreaEl.innerHTML = ''; let message = ""; let award = ""; let emojis = ""; if (reason === 'superfund') { award = "The Superfund Award"; message = `Your water quality dropped to ${zone.quality}%! The EPA has declared your zone a Superfund site.`; emojis = "☣️🤢🤮☣️"; } else if (reason === 'detroit') { award = "The Detroit Award"; message = `You were at or below $0 for ${zone.turnsInDebt} consecutive turns! The State Treasurer has placed you in receivership.`; emojis = "🏭📉💔📉🏭"; } const loserP = document.createElement('p'); loserP.className = 'game-end-message loser-message'; loserP.innerHTML = `${emojis} **${award}** ${emojis}<br>${message}<br>Game Over!`; winnerAnnounceAreaEl.appendChild(loserP); restartBtn.style.display = 'block'; }
+        function endGame() { if (gameOver) return; gameOver = true; isPlayerTurn = false; disablePlayerActions(); logMessage("--- Game Over ---", "title"); winnerAnnounceAreaEl.innerHTML = ''; let finalScores = {}; let maxScore = -1; ['zone1', 'zone2', 'zone3'].forEach(zoneId => { const zone = zones[zoneId]; const score = calculateScore(zone); finalScores[zoneId] = { score: score, zone: zone }; maxScore = Math.max(maxScore, score); let effectivePopulation = Math.max(1, zone.population); let sustainabilityPercent = Math.sqrt(score / effectivePopulation); logMessage(`Final Score - ${getZoneName(zoneId)} ${zone.modifiers.sprite} ${zone.isPlayer ? '(You)' : '(Bot)'}: ${score} (Pop: ${zone.population}, Sust: ${sustainabilityPercent.toFixed(2)})`); }); let winners = []; for (const zoneId in finalScores) { if (Math.abs(finalScores[zoneId].score - maxScore) < 0.1) { winners.push(`${getZoneName(zoneId)} ${finalScores[zoneId].zone.modifiers.sprite} ${finalScores[zoneId].zone.isPlayer ? '<strong>(You)</strong>' : '(Bot)'}`); } } let winnerMsgText = ""; if (winners.length === 1) { winnerMsgText = `${winners[0]} wins!`; if (winners[0].includes('(You)')) { winnerMsgText = `🎉 Congratulations! ${winners[0]} managed the watershed best! 🎉`; } } else if (winners.length > 1) { winnerMsgText = `It's a tie between: ${winners.join(' and ')}!`; } else { winnerMsgText = "No winner could be determined."; } const winnerP = document.createElement('p'); winnerP.className = 'game-end-message winner-message'; winnerP.innerHTML = winnerMsgText; winnerAnnounceAreaEl.appendChild(winnerP); restartBtn.style.display = 'block'; }
+
+        // --- Start Game Setup ---
+        window.onload = setupGame;
+
+    </script>
+
+</body>
+</html>
