@@ -123,9 +123,13 @@
             max-width: 800px;
             margin: 2rem auto;
         }
-        .rules-list li {
-            margin-bottom: 0.5rem;
+        /* Rules Text Styling */
+        .rules-text p {
+             margin-bottom: 0.75rem; /* Space between paragraphs */
+             line-height: 1.6; /* Improve readability */
         }
+
+
         .zone-selection-btn {
             margin: 0.5rem;
         }
@@ -160,28 +164,28 @@
     <div id="selectionScreen">
         <h2 class="text-2xl font-semibold mb-4 text-center text-sky-700">Game Setup</h2>
 
-        <div class="mb-6 p-4 border border-sky-200 rounded-lg bg-sky-50">
-            <h3 class="text-lg font-semibold mb-2 text-sky-800">Rules & Objective</h3>
-            <ul class="list-disc list-inside text-sm text-slate-700 rules-list">
-                <li>Manage your zone's resources and balance competing needs.</li>
-                <li>Zone location matters (Upstream: clean/costly, Downstream: polluted/cheaper).</li>
-                <li>Development increases income but also pollution and demand.</li>
-                <li>Treatment plants improve quality but cost money (less effective downstream).</li>
-                <li>**Invest in Conservation:** Permanently reduces city water demand per person (by 15% per level!). Cost increases with each level invested.</li>
-                <li>**Population:** Initially stable. **After Turn 10,** grows or shrinks based on Satisfaction (50% is neutral). Quality &le; 10% causes immediate loss (Superfund Award)! (Warning below 15%)</li>
-                <li>**Satisfaction:** Affected by meeting water demand and quality (effects slightly reduced early on). Changes have a **2-turn lag**. **After Turn 10,** Quality < 40% causes rapid decline, and population lower than its peak also hurts satisfaction (penalty reduced).</li>
-                <li>**Downstream Delivery:** **After Turn 10,** Upstream/Midstream zones have an *additional* water demand of <span id="ruleMinQty">?</span> units for downstream. Penalties apply if total demand isn't met OR if your zone's overall quality is below <span id="ruleMinQual">?</span>%. Fines paid are transferred to the downstream neighbor!</li>
-                <li>**Debt:** You can spend money you don't have, going into debt (negative balance). However, if your money is &le; 0 for 3 consecutive turns, you lose (Detroit Award)! (Warning on turn 2 of debt)</li>
-                <li>Costs increase as population grows. Compete against two AI managers.</li>
-                <li>Game lasts <strong><span id="maxTurnsDisplay">20</span> turns</strong>. Highest score wins.</li>
-            </ul>
-            <h3 class="text-lg font-semibold mt-4 mb-2 text-sky-800">Winning Condition</h3>
+        <div class="mb-6 p-4 border border-sky-200 rounded-lg bg-sky-50 rules-text">
+            <h3 class="text-lg font-semibold mb-2 text-sky-800">Welcome to Watershed Manager!</h3>
             <p class="text-sm text-slate-700">
-                Highest score wins. Score = <strong>Population &times; (Sustainability Score)&sup2;</strong>
-                <br>(Sustainability depends on Water Quality and meeting Water Demand).
+                This turn-based simulation game allows you to step into the shoes of a local Water Czar. You must manage financial constraints, political rivalries, and of course, ensure there’s enough clean water for everyone in your growing community.
+            </p>
+            <p class="text-sm text-slate-700">
+                In the game, you’ll take over management of one of three zones within a watershed: Upstream, Midstream, and Downstream. Development costs may be greater in the highlands, but being close to the snowpack that feeds the watershed allows the community to easily access clean water. As you move downhill, water quality becomes harder to maintain, but development costs decrease.
+            </p>
+
+            <h3 class="text-lg font-semibold mt-4 mb-2 text-sky-800">Gameplay</h3>
+            <p class="text-sm text-slate-700">
+                At the start of each turn, you can make one of four choices. Developing land encourages more people to come to your community, and it allows your economy (and budget) to grow. Upgrading water treatment helps maintain high water quality for you and your downstream neighbors. Investing in conservation permanently decreases the amount of water your zone needs by increasing efficiency. And lastly, if things are going fine, you can sit back and do nothing for a turn.
+            </p>
+
+            <h3 class="text-lg font-semibold mt-4 mb-2 text-sky-800">Challenges & Winning</h3>
+            <p class="text-sm text-slate-700">
+                Be careful! Failure to consistently meet downstream water deliveries (after Turn 10) will lead to financial penalties paid to your neighbor. If water quality becomes too reduced, the federal government could step in and end your tenure. Likewise, the state government is keeping a keen eye on your financials, and poor fiscal management (being in debt for 3 consecutive turns) can lead to your removal.
+            </p>
+            <p class="text-sm text-slate-700">
+                The game lasts for a total of <strong id="maxTurnsDisplay">20</strong> turns. You will compete against two automated, highly-effective water management czars. At the end of the game, a final score based on population, water quality, and community satisfaction is calculated for each of the three zone czars. The player with the highest score wins!
             </p>
         </div>
-
         <h3 class="text-lg font-semibold mb-3 text-center text-sky-700">Choose Your Starting Zone:</h3>
         <div class="text-center">
             <button id="selectUpstream" class="btn-blue zone-selection-btn">⛰️ Play Upstream (Zone 1)</button>
@@ -227,7 +231,7 @@
         const TREATMENT_COST_SCALING_PER_LEVEL = 1.5;
         const BASE_TREATMENT_POLLUTION_REDUCTION = 10;
         const BASE_TREATMENT_QUALITY_BONUS = 5;
-        const CONSERVATION_EFFECT_PER_LEVEL = 0.85; // Buffed: 15% demand reduction per level (was 0.90)
+        const CONSERVATION_EFFECT_PER_LEVEL = 0.85; // 15% demand reduction per level
         const CONSERVATION_COST_LEVEL_SCALING = 1.4;
         const POPULATION_COST_SCALING_FACTOR = 0.02;
         const BASE_QUALITY_IMPACT_FACTOR = 1.5;
